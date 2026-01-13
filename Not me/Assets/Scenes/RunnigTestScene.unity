@@ -909,8 +909,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3678268d29faee144b393091efa5653f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  moveSpeed: 8
-  jumpForce: 22
+  moveSpeed: 5
+  jumpForce: 10
   itemGauge: 0
   itemObtained: 0
   isStunned: 0
@@ -931,7 +931,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 6
+  m_GravityScale: 1.5
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
