@@ -5,11 +5,11 @@ using UnityEngine.UI;
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
-    
+
     public Slider itemSlider;
     public Slider progressSlider;
     public TextMeshProUGUI itemText;
-    
+
     private PlayerController targetPlayer;
 
     void Awake()
@@ -19,20 +19,25 @@ public class UIManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
-    
+
     public void RegisterPlayer(PlayerController player)
     {
+        // Only register local player
         targetPlayer = player;
     }
-    
+
     void Update()
     {
         if (targetPlayer == null) return;
-        
-        // 아이템 게이지
-        itemSlider.value = targetPlayer.itemGauge;
-        
+
+        // 아이템 게이지 (NetworkVariable 접근)
+        itemSlider.value = targetPlayer.itemGauge.Value;
+
         //보유 아이템 텍스트 표시(임시)
         UpdateItemText();
 
@@ -40,10 +45,10 @@ public class UIManager : MonoBehaviour
         float finishLineX = 500f; //최종점 : 500f 거리
         progressSlider.value = targetPlayer.transform.position.x / finishLineX;
     }
-    
+
     void UpdateItemText()
     {
-        switch (targetPlayer.itemObtained)
+        switch (targetPlayer.itemObtained.Value)
         {
             case 0: itemText.text = "EMPTY"; break;
             case 1: itemText.text = "Taser Drone"; break;
