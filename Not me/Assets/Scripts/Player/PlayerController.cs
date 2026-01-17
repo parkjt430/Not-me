@@ -22,6 +22,7 @@ public class PlayerController : NetworkBehaviour
     
     [Header("Item")]
     public GameObject taserDronePrefab;
+    public GameObject gravityShacklePrefab;
 
     private Rigidbody2D rb;
     private int jumpCount = 0;
@@ -152,11 +153,25 @@ public class PlayerController : NetworkBehaviour
                 StartCoroutine(SpeedModifyRoutine(2f, 3f));
                 itemObtained.Value = 0;
                 break;
+            case 3:
+                FireGravityShackle();
+                itemObtained.Value = 0;
+                break;
+            case 4:
+                break;   
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void GetStunnedServerRpc(float duration)
+    {
+        if (isGod.Value) return;
+
+        StartCoroutine(StunRoutine(duration));
+    }
+    
+    [ServerRpc(RequireOwnership = false)]
+    public void GetGravityServerRpc(float duration)
     {
         if (isGod.Value) return;
 
@@ -185,12 +200,19 @@ public class PlayerController : NetworkBehaviour
         if (rb.linearVelocity.y > 0)
             rb.linearVelocity = new Vector2(0, -10f);
 
-        UpdateStunVisualClientRpc(true);
-
         yield return new WaitForSeconds(duration);
         isStunned.Value = false;
+        
+    }
+    
+    IEnumerator GravityRoutine(float duration) //중력 효과
+    {
+        if (!IsServer) yield break;
 
-        UpdateStunVisualClientRpc(false);
+        rb.gravityScale *= 2;
+
+        yield return new WaitForSeconds(duration);
+        rb.gravityScale /= 2;
     }
 
     IEnumerator GodRoutine(float duration) //무적 효과
@@ -206,12 +228,6 @@ public class PlayerController : NetworkBehaviour
         isGod.Value = false;
 
         UpdateGodVisualClientRpc(false);
-    }
-
-    [ClientRpc]
-    void UpdateStunVisualClientRpc(bool stunned)
-    {
-        // Visual feedback for stun (can be expanded later)
     }
 
     [ClientRpc]
@@ -322,6 +338,41 @@ public class PlayerController : NetworkBehaviour
         droneNetObj.Spawn();
 
         TaserDrone drone = droneObj.GetComponent<TaserDrone>();
+        if (closestEnemy != null)
+        {
+            drone.SetTargetClientRpc(closestEnemy.NetworkObjectId);
+        }
+    }
+
+    private void FireGravityShackle()
+    {
+        if (!IsServer) return;
+
+        // Find all networked players
+        NetworkObject[] players = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
+        NetworkObject closestEnemy = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (NetworkObject p in players)
+        {
+            if (p == this.NetworkObject) continue; // 자기 자신은 제외
+            if (!p.CompareTag("Player")) continue; // Player 태그만
+
+            float distance = Vector2.Distance(transform.position, p.transform.position);
+            // 내 앞에 있는 적만 타겟팅
+            if (p.transform.position.x > transform.position.x && distance < minDistance)
+            {
+                minDistance = distance;
+                closestEnemy = p;
+            }
+        }
+
+        //드론 생성 및 타겟 설정
+        GameObject droneObj = Instantiate(gravityShacklePrefab, transform.position + Vector3.right, Quaternion.identity);
+        NetworkObject droneNetObj = droneObj.GetComponent<NetworkObject>();
+        droneNetObj.Spawn();
+
+        GravityShackle drone = droneObj.GetComponent<GravityShackle>();
         if (closestEnemy != null)
         {
             drone.SetTargetClientRpc(closestEnemy.NetworkObjectId);

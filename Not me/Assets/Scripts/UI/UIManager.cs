@@ -53,6 +53,7 @@ public class UIManager : MonoBehaviour
             case 0: itemText.text = "EMPTY"; break;
             case 1: itemText.text = "Taser Drone"; break;
             case 2: itemText.text = "Adrenaline"; break;
+            case 3: itemText.text = "GravityShackle"; break;
         }
     }
 }
