@@ -2,13 +2,13 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
 
-public class GravityShackle : NetworkBehaviour
+public class EMPEmitter : NetworkBehaviour
 {
     private NetworkVariable<ulong> targetNetworkId = new NetworkVariable<ulong>(ulong.MaxValue, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     public float speed = 15f;
     public float rotateSpeed = 10f;
-    public float gravityDebuffDuration = 5f;
+    public float debuffDuration = 5f;
 
     private Rigidbody2D rb;
     private Transform target;
@@ -72,17 +72,16 @@ public class GravityShackle : NetworkBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!IsServer) return; // Only server handles collision
+        if (!IsServer) return;
 
         if (other.CompareTag("Player") && target != null && other.transform == target)
         {
             PlayerController enemy = other.GetComponent<PlayerController>();
             if (enemy != null)
             {
-                enemy.ApplyGravityDebuffServerRpc(gravityDebuffDuration);
+                enemy.ApplyEMPServerRpc(debuffDuration);
             }
 
-            // Despawn the projectile
             NetworkObject.Despawn();
         }
     }

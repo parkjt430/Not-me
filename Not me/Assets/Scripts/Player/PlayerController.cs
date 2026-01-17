@@ -18,14 +18,21 @@ public class PlayerController : NetworkBehaviour
     [Header("State")]
     public NetworkVariable<bool> isStunned = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<bool> isGod = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> hasNeuroVirus = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> hasEMP = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private float currentSpeed;// 실제 현재 적용 중인 속도
     
     [Header("Item")]
     public GameObject taserDronePrefab;
     public GameObject gravityShacklePrefab;
+    public GameObject neuroVirusPrefab;
+    public GameObject empEmitterPrefab;
 
     private Rigidbody2D rb;
     private int jumpCount = 0;
+    private bool isGrounded = false;
+    private float neuroVirusJumpTimer = 0f;
+    private const float neuroVirusJumpInterval = 0.3f; // 땅에 닿은 후 점프까지 대기 시간
 
     public override void OnNetworkSpawn()
     {
@@ -57,10 +64,22 @@ public class PlayerController : NetworkBehaviour
         currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, (moveSpeed / accelerationTime) * Time.deltaTime);
         rb.linearVelocity = new Vector2(currentSpeed, rb.linearVelocity.y);
 
+        // 신경 교란제 디버프: 땅에 닿아있을 때 주기적으로 강제 점프
+        if (hasNeuroVirus.Value && isGrounded)
+        {
+            neuroVirusJumpTimer += Time.deltaTime;
+            if (neuroVirusJumpTimer >= neuroVirusJumpInterval)
+            {
+                ForceShortJumpServerRpc();
+                neuroVirusJumpTimer = 0f;
+            }
+        }
+
         if (Input.GetKeyDown(KeyCode.Space)) JumpStart();
         if (Input.GetKeyUp(KeyCode.Space)) JumpEnd();
 
-        if (Input.GetMouseButtonDown(0))
+        // EMP 디버프 상태에서는 아이템 사용 불가
+        if (Input.GetMouseButtonDown(0) && !hasEMP.Value)
         {
             UseItemServerRpc();
         }
@@ -106,6 +125,17 @@ public class PlayerController : NetworkBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             jumpCount = 0;
+            isGrounded = true;
+            neuroVirusJumpTimer = 0f; // 착지 시 타이머 리셋
+        }
+    }
+
+    void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = false;
+            neuroVirusJumpTimer = 0f;
         }
     }
     
@@ -115,12 +145,16 @@ public class PlayerController : NetworkBehaviour
 
         if (other.CompareTag("Checkpoint"))
         {
-            itemGauge.Value += 0.5f;
-
-            if (itemGauge.Value >= 1f)
+            // EMP 디버프 상태에서는 게이지 충전 불가
+            if (!hasEMP.Value)
             {
-                itemGauge.Value = 0f;
-                ObtainItemServerRpc(Random.Range(1, 3));
+                itemGauge.Value += 0.5f;
+
+                if (itemGauge.Value >= 1f)
+                {
+                    itemGauge.Value = 0f;
+                    ObtainItemServerRpc(4);
+                }
             }
         }
 
@@ -158,7 +192,13 @@ public class PlayerController : NetworkBehaviour
                 itemObtained.Value = 0;
                 break;
             case 4:
-                break;   
+                FireNeuroVirus();
+                itemObtained.Value = 0;
+                break;
+            case 5:
+                FireEMPEmitter();
+                itemObtained.Value = 0;
+                break;
         }
     }
 
@@ -169,13 +209,46 @@ public class PlayerController : NetworkBehaviour
 
         StartCoroutine(StunRoutine(duration));
     }
-    
+
     [ServerRpc(RequireOwnership = false)]
-    public void GetGravityServerRpc(float duration)
+    public void ApplyGravityDebuffServerRpc(float duration)
     {
         if (isGod.Value) return;
 
-        StartCoroutine(StunRoutine(duration));
+        StartCoroutine(GravityRoutine(duration));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ApplyNeuroVirusServerRpc(float duration)
+    {
+        if (isGod.Value) return;
+
+        StartCoroutine(NeuroVirusRoutine(duration));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ApplyEMPServerRpc(float duration)
+    {
+        if (isGod.Value) return;
+
+        StartCoroutine(EMPRoutine(duration));
+    }
+
+    [ServerRpc]
+    void ForceShortJumpServerRpc()
+    {
+        ForceShortJumpClientRpc();
+    }
+
+    [ClientRpc]
+    void ForceShortJumpClientRpc()
+    {
+        if (!IsOwner) return;
+
+        // 강제 숏 점프
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
+        rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        jumpCount = 1; // 더블 점프는 가능하도록 설정
     }
 
     [ServerRpc]
@@ -213,6 +286,28 @@ public class PlayerController : NetworkBehaviour
 
         yield return new WaitForSeconds(duration);
         rb.gravityScale /= 2;
+    }
+
+    IEnumerator NeuroVirusRoutine(float duration) //신경 교란제 디버프
+    {
+        if (!IsServer) yield break;
+
+        hasNeuroVirus.Value = true;
+
+        yield return new WaitForSeconds(duration);
+
+        hasNeuroVirus.Value = false;
+    }
+
+    IEnumerator EMPRoutine(float duration) //EMP 디버프
+    {
+        if (!IsServer) yield break;
+
+        hasEMP.Value = true;
+
+        yield return new WaitForSeconds(duration);
+
+        hasEMP.Value = false;
     }
 
     IEnumerator GodRoutine(float duration) //무적 효과
@@ -340,7 +435,7 @@ public class PlayerController : NetworkBehaviour
         TaserDrone drone = droneObj.GetComponent<TaserDrone>();
         if (closestEnemy != null)
         {
-            drone.SetTargetClientRpc(closestEnemy.NetworkObjectId);
+            drone.SetTarget(closestEnemy.NetworkObjectId);
         }
     }
 
@@ -375,7 +470,77 @@ public class PlayerController : NetworkBehaviour
         GravityShackle drone = droneObj.GetComponent<GravityShackle>();
         if (closestEnemy != null)
         {
-            drone.SetTargetClientRpc(closestEnemy.NetworkObjectId);
+            drone.SetTarget(closestEnemy.NetworkObjectId);
+        }
+    }
+
+    private void FireNeuroVirus()
+    {
+        if (!IsServer) return;
+
+        // Find all networked players
+        NetworkObject[] players = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
+        NetworkObject closestEnemy = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (NetworkObject p in players)
+        {
+            if (p == this.NetworkObject) continue; // 자기 자신은 제외
+            if (!p.CompareTag("Player")) continue; // Player 태그만
+
+            float distance = Vector2.Distance(transform.position, p.transform.position);
+            // 내 앞에 있는 적만 타겟팅
+            if (p.transform.position.x > transform.position.x && distance < minDistance)
+            {
+                minDistance = distance;
+                closestEnemy = p;
+            }
+        }
+
+        //발사체 생성 및 타겟 설정
+        GameObject projectileObj = Instantiate(neuroVirusPrefab, transform.position + Vector3.right, Quaternion.identity);
+        NetworkObject projectileNetObj = projectileObj.GetComponent<NetworkObject>();
+        projectileNetObj.Spawn();
+
+        NeuroVirus projectile = projectileObj.GetComponent<NeuroVirus>();
+        if (closestEnemy != null)
+        {
+            projectile.SetTarget(closestEnemy.NetworkObjectId);
+        }
+    }
+
+    private void FireEMPEmitter()
+    {
+        if (!IsServer) return;
+
+        // Find all networked players
+        NetworkObject[] players = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
+        NetworkObject closestEnemy = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (NetworkObject p in players)
+        {
+            if (p == this.NetworkObject) continue; // 자기 자신은 제외
+            if (!p.CompareTag("Player")) continue; // Player 태그만
+
+            float distance = Vector2.Distance(transform.position, p.transform.position);
+            // 내 앞에 있는 적만 타겟팅
+            if (p.transform.position.x > transform.position.x && distance < minDistance)
+            {
+                minDistance = distance;
+                closestEnemy = p;
+            }
+        }
+
+        //발사체 생성 및 타겟 설정
+        GameObject projectileObj = Instantiate(empEmitterPrefab, transform.position + Vector3.right, Quaternion.identity);
+        NetworkObject projectileNetObj = projectileObj.GetComponent<NetworkObject>();
+        projectileNetObj.Spawn();
+
+        EMPEmitter projectile = projectileObj.GetComponent<EMPEmitter>();
+        if (closestEnemy != null)
+        {
+            projectile.SetTarget(closestEnemy.NetworkObjectId);
         }
     }
 }

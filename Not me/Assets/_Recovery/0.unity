@@ -1885,7 +1885,7 @@ MonoBehaviour:
   hostButton: {fileID: 1578541151}
   clientButton: {fileID: 926730308}
   ipAddress: 127.0.0.1
-  port: 7777
+  port: 7778
 --- !u!114 &1332687287
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -18,12 +18,25 @@ public class NetworkManagerSetup : MonoBehaviour
 
     void Start()
     {
+        // Setup connection approval callback
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
+        }
+
         // Setup button listeners
         if (hostButton != null)
             hostButton.onClick.AddListener(StartHost);
 
         if (clientButton != null)
             clientButton.onClick.AddListener(StartClient);
+    }
+
+    private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+    {
+        // Auto-approve all connections
+        response.Approved = true;
+        response.CreatePlayerObject = true;
     }
 
     public void StartHost()
@@ -67,6 +80,12 @@ public class NetworkManagerSetup : MonoBehaviour
 
     void OnDestroy()
     {
+        // Clean up approval callback
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.ConnectionApprovalCallback = null;
+        }
+
         if (hostButton != null)
             hostButton.onClick.RemoveListener(StartHost);
 

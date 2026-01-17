@@ -13,9 +13,10 @@ public class TaserDrone : NetworkBehaviour
     private Rigidbody2D rb;
     private Transform target;
 
-    [ClientRpc]
-    public void SetTargetClientRpc(ulong networkObjectId)
+    public void SetTarget(ulong networkObjectId)
     {
+        if (!IsServer) return;
+
         targetNetworkId.Value = networkObjectId;
         UpdateTargetReference();
     }
