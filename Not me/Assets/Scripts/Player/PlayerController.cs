@@ -20,6 +20,8 @@ public class PlayerController : NetworkBehaviour
     public NetworkVariable<bool> isGod = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<bool> hasNeuroVirus = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<bool> hasEMP = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> hasGlitchScreen = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> hasFirewall = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private float currentSpeed;// 실제 현재 적용 중인 속도
     
     [Header("Item")]
@@ -27,12 +29,15 @@ public class PlayerController : NetworkBehaviour
     public GameObject gravityShacklePrefab;
     public GameObject neuroVirusPrefab;
     public GameObject empEmitterPrefab;
+    public GameObject glitchScreenPrefab;
+    public GameObject firewallPrefab;
 
     private Rigidbody2D rb;
     private int jumpCount = 0;
     private bool isGrounded = false;
     private float neuroVirusJumpTimer = 0f;
     private const float neuroVirusJumpInterval = 0.3f; // 땅에 닿은 후 점프까지 대기 시간
+    private GameObject activeFirewall = null; // 현재 활성화된 방화벽 인스턴스
 
     public override void OnNetworkSpawn()
     {
@@ -152,8 +157,11 @@ public class PlayerController : NetworkBehaviour
 
                 if (itemGauge.Value >= 1f)
                 {
-                    itemGauge.Value = 0f;
-                    ObtainItemServerRpc(4);
+                    if (itemObtained.Value == 0)
+                    {
+                        itemGauge.Value = 0f;
+                        ObtainItemServerRpc(Random.Range(1, 8));
+                    }
                 }
             }
         }
@@ -199,13 +207,21 @@ public class PlayerController : NetworkBehaviour
                 FireEMPEmitter();
                 itemObtained.Value = 0;
                 break;
+            case 6:
+                FireGlitchScreen();
+                itemObtained.Value = 0;
+                break;
+            case 7:
+                ActivateFirewall();
+                itemObtained.Value = 0;
+                break;
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void GetStunnedServerRpc(float duration)
     {
-        if (isGod.Value) return;
+        if (isGod.Value || hasFirewall.Value) return;
 
         StartCoroutine(StunRoutine(duration));
     }
@@ -213,7 +229,7 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ApplyGravityDebuffServerRpc(float duration)
     {
-        if (isGod.Value) return;
+        if (isGod.Value || hasFirewall.Value) return;
 
         StartCoroutine(GravityRoutine(duration));
     }
@@ -221,7 +237,7 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ApplyNeuroVirusServerRpc(float duration)
     {
-        if (isGod.Value) return;
+        if (isGod.Value || hasFirewall.Value) return;
 
         StartCoroutine(NeuroVirusRoutine(duration));
     }
@@ -229,9 +245,23 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ApplyEMPServerRpc(float duration)
     {
-        if (isGod.Value) return;
+        if (isGod.Value || hasFirewall.Value) return;
 
         StartCoroutine(EMPRoutine(duration));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ApplyGlitchScreenServerRpc(float duration)
+    {
+        if (isGod.Value || hasFirewall.Value) return;
+
+        StartCoroutine(GlitchScreenRoutine(duration));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void DeactivateFirewallServerRpc()
+    {
+        hasFirewall.Value = false;
     }
 
     [ServerRpc]
@@ -308,6 +338,43 @@ public class PlayerController : NetworkBehaviour
         yield return new WaitForSeconds(duration);
 
         hasEMP.Value = false;
+    }
+
+    IEnumerator GlitchScreenRoutine(float duration) //글리치 스크린 디버프
+    {
+        if (!IsServer) yield break;
+
+        hasGlitchScreen.Value = true;
+        ApplyGlitchScreenEffectClientRpc();
+
+        yield return new WaitForSeconds(duration);
+
+        hasGlitchScreen.Value = false;
+        RemoveGlitchScreenEffectClientRpc();
+    }
+
+    [ClientRpc]
+    void ApplyGlitchScreenEffectClientRpc()
+    {
+        if (!IsOwner) return;
+
+        // UI 노이즈 효과 적용 (UIManager를 통해 처리)
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.EnableGlitchEffect(true);
+        }
+    }
+
+    [ClientRpc]
+    void RemoveGlitchScreenEffectClientRpc()
+    {
+        if (!IsOwner) return;
+
+        // UI 노이즈 효과 제거
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.EnableGlitchEffect(false);
+        }
     }
 
     IEnumerator GodRoutine(float duration) //무적 효과
@@ -541,6 +608,73 @@ public class PlayerController : NetworkBehaviour
         if (closestEnemy != null)
         {
             projectile.SetTarget(closestEnemy.NetworkObjectId);
+        }
+    }
+
+    private void FireGlitchScreen()
+    {
+        if (!IsServer) return;
+
+        // Find all networked players
+        NetworkObject[] players = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
+        NetworkObject closestEnemy = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (NetworkObject p in players)
+        {
+            if (p == this.NetworkObject) continue;
+            if (!p.CompareTag("Player")) continue;
+
+            float distance = Vector2.Distance(transform.position, p.transform.position);
+            if (p.transform.position.x > transform.position.x && distance < minDistance)
+            {
+                minDistance = distance;
+                closestEnemy = p;
+            }
+        }
+
+        GameObject projectileObj = Instantiate(glitchScreenPrefab, transform.position + Vector3.right, Quaternion.identity);
+        NetworkObject projectileNetObj = projectileObj.GetComponent<NetworkObject>();
+        projectileNetObj.Spawn();
+
+        GlitchScreen projectile = projectileObj.GetComponent<GlitchScreen>();
+        if (closestEnemy != null)
+        {
+            projectile.SetTarget(closestEnemy.NetworkObjectId);
+        }
+    }
+
+    private void ActivateFirewall()
+    {
+        if (!IsServer) return;
+
+        hasFirewall.Value = true;
+
+        // 플레이어 주변에 방화벽 생성
+        GameObject firewallObj = Instantiate(firewallPrefab, transform.position, Quaternion.identity);
+        NetworkObject firewallNetObj = firewallObj.GetComponent<NetworkObject>();
+        firewallNetObj.Spawn();
+
+        Firewall firewall = firewallObj.GetComponent<Firewall>();
+        firewall.SetOwner(this);
+
+        activeFirewall = firewallObj;
+    }
+    
+    public void OnEatJelly(float amount) //젤리를 먹었을때 점수 올라가는 매커니즘
+    {
+        if (!hasEMP.Value)
+        {
+            itemGauge.Value += amount;
+            
+            if (itemGauge.Value >= 1f)
+            {
+                if (itemObtained.Value == 0)
+                {
+                    itemGauge.Value = 0f;
+                    ObtainItemServerRpc(Random.Range(1, 8));
+                }
+            }
         }
     }
 }

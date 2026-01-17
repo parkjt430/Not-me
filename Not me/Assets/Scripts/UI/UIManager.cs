@@ -9,6 +9,7 @@ public class UIManager : MonoBehaviour
     public Slider itemSlider;
     public Slider progressSlider;
     public TextMeshProUGUI itemText;
+    public GameObject glitchEffectPanel; // 글리치 효과 패널 (UI에 추가 필요)
 
     private PlayerController targetPlayer;
 
@@ -56,6 +57,16 @@ public class UIManager : MonoBehaviour
             case 3: itemText.text = "GravityShackle"; break;
             case 4: itemText.text = "NeuroVirus"; break;
             case 5: itemText.text = "EMPEmitter"; break;
+            case 6: itemText.text = "GlitchScreen"; break;
+            case 7: itemText.text = "Firewall"; break;
+        }
+    }
+
+    public void EnableGlitchEffect(bool enable)
+    {
+        if (glitchEffectPanel != null)
+        {
+            glitchEffectPanel.SetActive(enable);
         }
     }
 }

@@ -3,6 +3,8 @@ using Unity.Netcode;
 using System.Collections.Generic;
 
 /// <summary>
+/// AI가 만들어준 플레이어 스폰 시스템
+/// AI가 만들어서기도 하고 아직 세션연결 구현 안되어있어서 사용되지 않는 더미 코드입니다
 /// Manages player spawn positions for multiplayer
 /// Attach this to a GameObject in your scene
 /// </summary>

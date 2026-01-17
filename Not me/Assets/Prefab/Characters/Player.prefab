@@ -176,10 +176,16 @@ MonoBehaviour:
     m_InternalValue: 0
   hasEMP:
     m_InternalValue: 0
+  hasGlitchScreen:
+    m_InternalValue: 0
+  hasFirewall:
+    m_InternalValue: 0
   taserDronePrefab: {fileID: 1352380234520079270, guid: 9a194b67ef5703a4eb8e37166c80ea91, type: 3}
   gravityShacklePrefab: {fileID: 1352380234520079270, guid: 6bc9069a6172d1549b3f95be6f35d9fa, type: 3}
   neuroVirusPrefab: {fileID: 1352380234520079270, guid: f4db1fab0b19e204f9370c0a45e49062, type: 3}
   empEmitterPrefab: {fileID: 1352380234520079270, guid: 0ebb1537882ad9041afdda9bb0ef455f, type: 3}
+  glitchScreenPrefab: {fileID: 1352380234520079270, guid: 9c65db59d2b8b244bb697bdc6414718b, type: 3}
+  firewallPrefab: {fileID: 1352380234520079270, guid: 886c30ef6c3af8e4b815fc5b32d86be0, type: 3}
 --- !u!114 &-683003911145836957
 MonoBehaviour:
   m_ObjectHideFlags: 0
