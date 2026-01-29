@@ -12,7 +12,7 @@ public class PlayerController : NetworkBehaviour
     private float targetSpeed;          // 도달하고자 하는 목표 속도
 
     // NetworkVariables for syncing state across clients
-    public NetworkVariable<float> itemGauge = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<float> itemGauge = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<int> itemObtained = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Header("State")]
@@ -32,12 +32,18 @@ public class PlayerController : NetworkBehaviour
     public GameObject glitchScreenPrefab;
     public GameObject firewallPrefab;
 
+    [Header("JustZonePending")] //저스트 존 관련 보상 변수
+    public float justZoneItemGauge = 0.2f;
+    public float justZoneSpeedMultiplier = 1.5f;
+    public float justZoneSpeedDuration = 1f;
+    
     private Rigidbody2D rb;
     private int jumpCount = 0;
     private bool isGrounded = false;
     private float neuroVirusJumpTimer = 0f;
     private const float neuroVirusJumpInterval = 0.3f; // 땅에 닿은 후 점프까지 대기 시간
     private GameObject activeFirewall = null; // 현재 활성화된 방화벽 인스턴스
+    public bool isJustZonePending = false; // JustZone 보상 확인용 플래그
 
     public override void OnNetworkSpawn()
     {
@@ -129,6 +135,17 @@ public class PlayerController : NetworkBehaviour
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
+            if (IsOwner && isJustZonePending && !isGod.Value && !isStunned.Value) //땅에 닿기전 Just회피에 성공했을때
+            {
+                ApplyJustZoneBonusServerRpc(); // 서버에 보상 요청
+                isJustZonePending = false;     // 플래그 초기화
+            }
+            
+            else if (IsOwner && (isGod.Value || isStunned.Value))
+            {
+                isJustZonePending = false;
+            }
+            
             jumpCount = 0;
             isGrounded = true;
             neuroVirusJumpTimer = 0f; // 착지 시 타이머 리셋
@@ -147,6 +164,15 @@ public class PlayerController : NetworkBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         if (!IsOwner) return; // Only process triggers for local player
+        
+        if (other.CompareTag("JustZone"))
+        {
+            // 땅에 닿지 않은 상태(점프 중)일 때만 유효
+            if (!isGrounded)
+            {
+                isJustZonePending = true; //justzone 보상 받는 상태 On
+            }
+        }
 
         if (other.CompareTag("Checkpoint"))
         {
@@ -168,11 +194,42 @@ public class PlayerController : NetworkBehaviour
 
         if (other.gameObject.layer == 7)
         {
+            
+            isJustZonePending = false;//장애물 충돌시 justzone 보상 취소
+            
             if (!isGod.Value)
             {
                 ApplyStunServerRpc(0.5f, 1.5f);
             }
         }
+    }
+    
+    [ServerRpc]
+    void ApplyJustZoneBonusServerRpc() //저스트 회피시 보상 매커니즘
+    {
+        // 게이지 충전
+        if (!hasEMP.Value)
+        {
+            itemGauge.Value += justZoneItemGauge;
+
+            // 게이지가 꽉 찼고 아이템이 없다면 아이템 획득
+            if (itemGauge.Value >= 1f)
+            {
+                if (itemObtained.Value == 0)
+                {
+                    itemGauge.Value = 0f;
+                    ObtainItemServerRpc(Random.Range(1, 8));
+                }
+                else
+                {
+                    // 아이템이 이미 있다면 게이지는 1로 유지하거나 0으로 초기화 (기획에 따라 선택, 여기선 유지)
+                    itemGauge.Value = 1f; 
+                }
+            }
+        }
+
+        // 이동 속도 증가
+        StartCoroutine(SpeedModifyRoutine(justZoneSpeedMultiplier, justZoneSpeedDuration));
     }
 
     [ServerRpc]
@@ -455,6 +512,8 @@ public class PlayerController : NetworkBehaviour
     void RespawnPlayerClientRpc(float newX)
     {
         if (!IsOwner) return;
+        
+        isJustZonePending = false; //낙사로 인한 리스폰시 저스트 회피 보너스 X
 
         rb.linearVelocity = Vector2.zero;
         rb.simulated = false; // 물리 연산 잠시 끄기
@@ -661,12 +720,22 @@ public class PlayerController : NetworkBehaviour
         activeFirewall = firewallObj;
     }
     
-    public void OnEatJelly(float amount) //젤리를 먹었을때 점수 올라가는 매커니즘
+    public void OnEatJelly(float amount) //젤리 먹을시 점수가 올라가는 방식(서버에 itemgauge 변경 요청)
+    {
+        // 로컬 클라이언트인 경우 서버에 요청
+        if (IsOwner)
+        {
+            RequestEatJellyServerRpc(amount);
+        }
+    }
+
+    [ServerRpc]
+    void RequestEatJellyServerRpc(float amount)
     {
         if (!hasEMP.Value)
         {
             itemGauge.Value += amount;
-            
+
             if (itemGauge.Value >= 1f)
             {
                 if (itemObtained.Value == 0)
