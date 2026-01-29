@@ -186,6 +186,14 @@ MonoBehaviour:
   empEmitterPrefab: {fileID: 1352380234520079270, guid: 0ebb1537882ad9041afdda9bb0ef455f, type: 3}
   glitchScreenPrefab: {fileID: 1352380234520079270, guid: 9c65db59d2b8b244bb697bdc6414718b, type: 3}
   firewallPrefab: {fileID: 1352380234520079270, guid: 886c30ef6c3af8e4b815fc5b32d86be0, type: 3}
+  chemicalPuddlePrefab: {fileID: 3065425361272572085, guid: 78441c74db512214c986ff6c68538d7e, type: 3}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  justZoneItemGauge: 1
+  justZoneSpeedMultiplier: 1.5
+  justZoneSpeedDuration: 1
+  isJustZonePending: 0
 --- !u!114 &-683003911145836957
 MonoBehaviour:
   m_ObjectHideFlags: 0

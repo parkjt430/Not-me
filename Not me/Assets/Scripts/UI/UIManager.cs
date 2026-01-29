@@ -59,6 +59,7 @@ public class UIManager : MonoBehaviour
             case 5: itemText.text = "EMPEmitter"; break;
             case 6: itemText.text = "GlitchScreen"; break;
             case 7: itemText.text = "Firewall"; break;
+            case 8: itemText.text = "Chemical"; break;
         }
     }
 

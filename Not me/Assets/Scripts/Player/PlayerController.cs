@@ -31,6 +31,8 @@ public class PlayerController : NetworkBehaviour
     public GameObject empEmitterPrefab;
     public GameObject glitchScreenPrefab;
     public GameObject firewallPrefab;
+    public GameObject chemicalPuddlePrefab;
+    public LayerMask groundLayer; //낭떠러지 체크를 위한 땅 레이어
 
     [Header("JustZonePending")] //저스트 존 관련 보상 변수
     public float justZoneItemGauge = 0.2f;
@@ -205,7 +207,7 @@ public class PlayerController : NetworkBehaviour
     }
     
     [ServerRpc]
-    void ApplyJustZoneBonusServerRpc() //저스트 회피시 보상 매커니즘
+    void ApplyJustZoneBonusServerRpc() // 저스트 회피시 보상 매커니즘
     {
         // 게이지 충전
         if (!hasEMP.Value)
@@ -218,11 +220,11 @@ public class PlayerController : NetworkBehaviour
                 if (itemObtained.Value == 0)
                 {
                     itemGauge.Value = 0f;
-                    ObtainItemServerRpc(Random.Range(1, 8));
+                    
+                    itemObtained.Value = Random.Range(1, 9);
                 }
                 else
                 {
-                    // 아이템이 이미 있다면 게이지는 1로 유지하거나 0으로 초기화 (기획에 따라 선택, 여기선 유지)
                     itemGauge.Value = 1f; 
                 }
             }
@@ -271,6 +273,10 @@ public class PlayerController : NetworkBehaviour
             case 7:
                 ActivateFirewall();
                 itemObtained.Value = 0;
+                break;
+            case 8: 
+                    StartCoroutine(ChemicalSpillRoutine());
+                    itemObtained.Value = 0;
                 break;
         }
     }
@@ -483,6 +489,14 @@ public class PlayerController : NetworkBehaviour
 
         // 원래 최고 속도로 복구
         UpdateTargetSpeedClientRpc(moveSpeed);
+    }
+    
+    [ServerRpc(RequireOwnership = false)] //속도 디버프 루틴
+    public void ApplySpeedDebuffServerRpc(float multiplier, float duration)
+    {
+        if (isGod.Value || isStunned.Value) return; // 무적이나 기절 상태면 무시
+        
+        StartCoroutine(SpeedModifyRoutine(multiplier, duration));
     }
 
     [ClientRpc]
@@ -720,6 +734,34 @@ public class PlayerController : NetworkBehaviour
         activeFirewall = firewallObj;
     }
     
+    IEnumerator ChemicalSpillRoutine() //폐기물 살포
+    {
+        float duration = 2f; 
+        float spawnInterval = 0.1f; // 0.1초마다 장판 생성
+        float timer = 0f;
+
+        while (timer < duration)
+        {
+            // 낭떠러지 체크 (현재 위치에서 아래로 레이캐스팅하여 발 밑을 확인. 길이는 1.5f 정도
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 1.5f, groundLayer);
+
+            // 땅이 있을 때만 생성 
+            if (hit.collider != null)
+            {
+                // 장판 생성 위치 설정
+                Vector3 spawnPos = transform.position; 
+                spawnPos.y = hit.point.y + 0.1f; 
+
+                GameObject puddle = Instantiate(chemicalPuddlePrefab, spawnPos, Quaternion.identity);
+                NetworkObject puddleNet = puddle.GetComponent<NetworkObject>();
+                puddleNet.SpawnWithOwnership(OwnerClientId);
+            }
+            
+            timer += spawnInterval;
+            yield return new WaitForSeconds(spawnInterval);
+        }
+    }
+    
     public void OnEatJelly(float amount) //젤리 먹을시 점수가 올라가는 방식(서버에 itemgauge 변경 요청)
     {
         // 로컬 클라이언트인 경우 서버에 요청
@@ -741,7 +783,7 @@ public class PlayerController : NetworkBehaviour
                 if (itemObtained.Value == 0)
                 {
                     itemGauge.Value = 0f;
-                    ObtainItemServerRpc(Random.Range(1, 8));
+                    itemObtained.Value = Random.Range(1, 9);
                 }
             }
         }
