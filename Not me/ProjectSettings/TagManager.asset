@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 3
   tags:
   - Ground
+  - Checkpoint
+  - AttackItem
   layers:
   - Default
   - TransparentFX
@@ -13,11 +15,11 @@ TagManager:
   - Water
   - UI
   - Player
-  - Item
-  - Ground
   - Obstacle
-  - Detector
-  - EnemyAttack
+  - Ground
+  - FireWall
+  - 
+  - 
   - 
   - 
   - 
