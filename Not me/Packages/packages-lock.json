@@ -222,7 +222,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.multiplayer.tools": {
-      "version": "2.2.7",
+      "version": "2.2.6",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -307,8 +307,8 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.services.authentication": {
-      "version": "3.5.2",
-      "depth": 1,
+      "version": "3.6.0",
+      "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.ugui": "1.0.0",
