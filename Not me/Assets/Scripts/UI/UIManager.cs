@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviour
     public Slider progressSlider;
     public TextMeshProUGUI itemText;
     public GameObject glitchEffectPanel; // 글리치 효과 패널 (UI에 추가 필요)
+    public float finishLineX = 500f; //최종점 : 500f 거리
 
     private PlayerController targetPlayer;
 
@@ -43,7 +44,6 @@ public class UIManager : MonoBehaviour
         UpdateItemText();
 
         // 진행도 게이지
-        float finishLineX = 500f; //최종점 : 500f 거리
         progressSlider.value = targetPlayer.transform.position.x / finishLineX;
     }
 

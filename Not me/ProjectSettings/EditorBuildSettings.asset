@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/RunnigTestScene 1.unity
     guid: df70de916a3891447996d8a0b5ceb798
+  - enabled: 1
+    path: Assets/Scenes/RunnigTestScene.unity
+    guid: c6082950b5f32284587e67201c07f0ce
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

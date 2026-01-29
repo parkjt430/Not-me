@@ -89,9 +89,9 @@ public class PlayerController : NetworkBehaviour
             UseItemServerRpc();
         }
 
-        if (isGod.Value && transform.position.y < -3f) //무적상태에서 낙사 방지 (y의 위치 하드코딩 해놨음(3f))
+        if (isGod.Value && transform.position.y < -3.5f) //무적상태에서 낙사 방지 (y의 위치 하드코딩 해놨음(-3.5f))
         {
-            transform.position = new Vector3(transform.position.x, -3f, transform.position.z);
+            transform.position = new Vector3(transform.position.x, -3.5f, transform.position.z);
 
             if (rb.linearVelocity.y < 0)
             {
