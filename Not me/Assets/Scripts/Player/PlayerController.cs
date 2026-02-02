@@ -47,9 +47,13 @@ public class PlayerController : NetworkBehaviour
     private GameObject activeFirewall = null; // 현재 활성화된 방화벽 인스턴스
     public bool isJustZonePending = false; // JustZone 보상 확인용 플래그
 
+    //무적 상태일 때 떨어지지 않도록 안전 바닥 콜라이더
+    private Collider2D safetyFloorCollider;
+    private Collider2D myCollider;
+
     public override void OnNetworkSpawn()
     {
-        base.OnNetworkSpawn();  
+        base.OnNetworkSpawn();
 
         rb = GetComponent<Rigidbody2D>();
         targetSpeed = moveSpeed;
@@ -59,6 +63,45 @@ public class PlayerController : NetworkBehaviour
         if (IsOwner && UIManager.Instance != null)
         {
             UIManager.Instance.RegisterPlayer(this);
+        }
+
+        // 내 콜라이더 가져오기
+        myCollider = GetComponent<Collider2D>();
+
+        // 씬에 있는 'GlobalSafetyFloor' 찾기 (태그로 찾기)
+        GameObject floorObj = GameObject.FindGameObjectWithTag("SafetyFloor");
+        if (floorObj != null)
+        {
+            safetyFloorCollider = floorObj.GetComponent<Collider2D>();
+        }
+
+        // isGod 변수가 바뀔 때마다 실행될 함수 연결
+        isGod.OnValueChanged += OnGodModeChanged;
+
+        // 초기 상태 적용
+        UpdateSafetyFloorCollision(isGod.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        isGod.OnValueChanged -= OnGodModeChanged;
+    }
+
+    // 무적 상태가 변경될 때 호출됨
+    private void OnGodModeChanged(bool previousValue, bool newValue)
+    {
+        UpdateSafetyFloorCollision(newValue);
+    }
+
+    // 실제 충돌 설정 함수
+    private void UpdateSafetyFloorCollision(bool isGodActive)
+    {
+        if (safetyFloorCollider != null && myCollider != null)
+        {
+            // 무적(true)이면 : 충돌 무시 꺼짐 (밟을 수 있음)
+            // 무적 아님(false)이면 : 충돌 무시 켜짐 (그냥 통과해서 낙사함)
+            Physics2D.IgnoreCollision(myCollider, safetyFloorCollider, !isGodActive);
         }
     }
 
@@ -97,16 +140,16 @@ public class PlayerController : NetworkBehaviour
             UseItemServerRpc();
         }
 
-        if (isGod.Value && transform.position.y < -3.5f) //무적상태에서 낙사 방지 (y의 위치 하드코딩 해놨음(-3.5f))
-        {
-            transform.position = new Vector3(transform.position.x, -3.5f, transform.position.z);
+        // if (isGod.Value && transform.position.y < -3.5f) //무적상태에서 낙사 방지 (y의 위치 하드코딩 해놨음(-3.5f))
+        // {
+        //     transform.position = new Vector3(transform.position.x, -3.5f, transform.position.z);
 
-            if (rb.linearVelocity.y < 0)
-            {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
-                jumpCount = 0;
-            }
-        }
+        //     if (rb.linearVelocity.y < 0)
+        //     {
+        //         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
+        //         jumpCount = 0;
+        //     }
+        // }
 
         if (transform.position.y < -10f) //낙사
         {
@@ -459,7 +502,8 @@ public class PlayerController : NetworkBehaviour
     void UpdateGodVisualClientRpc(bool godMode)
     {
         // Player 레이어와 Obstacle 레이어 간 충돌 무시 설정
-        Physics2D.IgnoreLayerCollision(6, 7, godMode);
+        //이미 OnTriggerEnter2D에서 처리함
+        //Physics2D.IgnoreLayerCollision(6, 7, godMode);
 
         // 투명도 피드백
         SpriteRenderer sr = GetComponent<SpriteRenderer>();

@@ -111,7 +111,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 6.5
+  m_GravityScale: 5
   m_Material: {fileID: 6200000, guid: d2d7acfb497d45e428002f27c8e66119, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
@@ -119,9 +119,9 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!114 &4748546587704462336
 MonoBehaviour:
@@ -161,8 +161,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   ShowTopMostFoldoutHeaderGroup: 1
-  moveSpeed: 6
-  jumpForce: 23
+  moveSpeed: 5
+  jumpForce: 20
   accelerationTime: 1
   itemGauge:
     m_InternalValue: 0

@@ -222,7 +222,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.multiplayer.tools": {
-      "version": "2.2.6",
+      "version": "2.2.7",
       "depth": 0,
       "source": "registry",
       "dependencies": {
