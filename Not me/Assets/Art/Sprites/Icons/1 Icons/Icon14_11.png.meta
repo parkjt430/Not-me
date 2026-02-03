@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: 99567d3f7ab0a8944872229d498c5210
+guid: cc7826d753d10ac4d9ddb582ebffdd9c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1171342053879899836
-    second: Gemini_Generated_Image_mb0i4gmb0i4gmb0i_0
+      213: -6236367840824913244
+    second: Icon14_11_0
+  - first:
+      213: 4904055389211669975
+    second: Icon14_11_1
+  - first:
+      213: 3334701881498752365
+    second: Icon14_11_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +52,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -113,13 +119,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Gemini_Generated_Image_mb0i4gmb0i4gmb0i_0
+      name: Icon14_11_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1248
-        height: 832
+        x: 1
+        y: 1
+        width: 30
+        height: 28
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +134,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: cb6ecf75461714010800000000000000
-      internalID: 1171342053879899836
+      spriteID: 4a216fe8d78f379a0800000000000000
+      internalID: -6236367840824913244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Icon14_11_1
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 23
+        width: 12
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d53dc8c464be0440800000000000000
+      internalID: 4904055389211669975
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Icon14_11_2
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 8
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d655f8671bd374e20800000000000000
+      internalID: 3334701881498752365
       vertices: []
       indices: 
       edges: []
@@ -138,7 +188,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +198,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Gemini_Generated_Image_mb0i4gmb0i4gmb0i_0: 1171342053879899836
+      Icon14_11_0: -6236367840824913244
+      Icon14_11_1: 4904055389211669975
+      Icon14_11_2: 3334701881498752365
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
