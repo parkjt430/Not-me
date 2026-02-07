@@ -156,7 +156,7 @@ public class PlayerController : NetworkBehaviour
             RespawnServerRpc();
         }
     }
-    
+
     public void JumpStart()
     {
         if (jumpCount < 2)
@@ -164,6 +164,14 @@ public class PlayerController : NetworkBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             jumpCount++;
+        }
+        if (jumpCount == 1)
+        {
+            //애니매이션 jumpAniCnt값을 1로
+        }
+        else if (jumpCount == 2)
+        {
+            //애니매이션 jumpAniCnt값을 2로
         }
     }
     
@@ -185,15 +193,16 @@ public class PlayerController : NetworkBehaviour
                 ApplyJustZoneBonusServerRpc(); // 서버에 보상 요청
                 isJustZonePending = false;     // 플래그 초기화
             }
-            
+
             else if (IsOwner && (isGod.Value || isStunned.Value))
             {
                 isJustZonePending = false;
             }
-            
+
             jumpCount = 0;
             isGrounded = true;
             neuroVirusJumpTimer = 0f; // 착지 시 타이머 리셋
+            //애니매이션 jumpAniCnt값을 0으로
         }
     }
 
