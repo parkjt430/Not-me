@@ -60,7 +60,11 @@ public class PlayerController : NetworkBehaviour
         currentSpeed = moveSpeed;
 
         // Only register local player to UI
-        if (IsOwner && UIManager.Instance != null)
+        // if (IsOwner && UIManager.Instance != null)
+        // {
+        //     UIManager.Instance.RegisterPlayer(this);
+        // }
+        if ( UIManager.Instance != null)
         {
             UIManager.Instance.RegisterPlayer(this);
         }

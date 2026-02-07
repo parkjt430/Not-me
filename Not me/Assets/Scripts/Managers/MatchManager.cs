@@ -53,7 +53,7 @@ public class MatchManager : MonoBehaviour
             {
                 Debug.Log("게임 씬으로 이동");
                 
-                NetworkManager.Singleton.SceneManager.LoadScene("RunnigTestScene 1", UnityEngine.SceneManagement.LoadSceneMode.Single);
+                NetworkManager.Singleton.SceneManager.LoadScene("RunnigTestScene 2", UnityEngine.SceneManagement.LoadSceneMode.Single);
                 
                 isLogicStarted = false; // 중복 실행 방지
             }
