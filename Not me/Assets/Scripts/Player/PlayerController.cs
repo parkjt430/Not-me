@@ -46,6 +46,7 @@ public class PlayerController : NetworkBehaviour
     private const float neuroVirusJumpInterval = 0.3f; // 땅에 닿은 후 점프까지 대기 시간
     private GameObject activeFirewall = null; // 현재 활성화된 방화벽 인스턴스
     public bool isJustZonePending = false; // JustZone 보상 확인용 플래그
+    private Animator anim;
 
     //무적 상태일 때 떨어지지 않도록 안전 바닥 콜라이더
     private Collider2D safetyFloorCollider;
@@ -58,6 +59,8 @@ public class PlayerController : NetworkBehaviour
         rb = GetComponent<Rigidbody2D>();
         targetSpeed = moveSpeed;
         currentSpeed = moveSpeed;
+        // [애니메이션] 가져오기
+        anim = GetComponent<Animator>();
 
         // Only register local player to UI
         if (IsOwner && UIManager.Instance != null)
@@ -110,12 +113,21 @@ public class PlayerController : NetworkBehaviour
         // Only allow input for local player
         if (!IsOwner) return;
 
+        // [애니메이션] 1. 피격(Stun) 상태 동기화
+        // 네트워크 변수 isStunned 값을 애니메이터에 계속 전달
+        anim.SetBool("isStunned", isStunned.Value);
+
         if (isStunned.Value)
         {
             currentSpeed = 0f;
             rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
             return;
         }
+
+        // [애니메이션] 2. 수직 속도(yVelocity) 실시간 전달 (낙하 감지용)
+        // 이게 있어야 절벽에서 떨어질 때 Fall 모션이 나옵니다.
+        anim.SetFloat("yVelocity", rb.linearVelocity.y);
+
         //가속도
         currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, (moveSpeed / accelerationTime) * Time.deltaTime);
         rb.linearVelocity = new Vector2(currentSpeed, rb.linearVelocity.y);
@@ -167,11 +179,14 @@ public class PlayerController : NetworkBehaviour
         }
         if (jumpCount == 1)
         {
-            //애니매이션 jumpAniCnt값을 1로
+            //애니매이션
+            anim.SetTrigger("JumpTrigger");
+            anim.SetBool("isGrounded", false); // 공중 상태 확정
         }
         else if (jumpCount == 2)
         {
-            //애니매이션 jumpAniCnt값을 2로
+            //애니매이션
+            anim.SetTrigger("DoubleJumpTrigger");
         }
     }
     
@@ -202,7 +217,16 @@ public class PlayerController : NetworkBehaviour
             jumpCount = 0;
             isGrounded = true;
             neuroVirusJumpTimer = 0f; // 착지 시 타이머 리셋
-            //애니매이션 jumpAniCnt값을 0으로
+            // [애니메이션] 4. 착지 처리
+            // 땅에 닿았으니 Fall 상태를 끝내고 Run으로 돌아가게 함
+            anim.SetBool("isGrounded", true);
+
+        }
+        else if (collision.gameObject.CompareTag("SafetyFloor"))
+        {
+            // [애니메이션] 4. 착지 처리
+            // 땅에 닿았으니 Fall 상태를 끝내고 Run으로 돌아가게 함
+            anim.SetBool("isGrounded", true);
         }
     }
 
@@ -212,6 +236,9 @@ public class PlayerController : NetworkBehaviour
         {
             isGrounded = false;
             neuroVirusJumpTimer = 0f;
+
+            // [애니메이션] 5. 땅에서 발이 떨어짐
+            anim.SetBool("isGrounded", false);
         }
     }
     
