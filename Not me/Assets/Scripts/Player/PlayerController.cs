@@ -212,7 +212,15 @@ public class PlayerController : NetworkBehaviour
     
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!IsOwner) return; // Only process triggers for local player
+        if (!IsOwner) return; 
+        
+        if (other.CompareTag("EndPoint"))
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.PlayerReachedEndPointServerRpc(OwnerClientId);
+            }
+        }
         
         if (other.CompareTag("JustZone"))
         {
