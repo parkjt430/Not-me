@@ -88,7 +88,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3483805278199826490, guid: 7f57d061be7113647948ead0b8d2ca69, type: 3}
-  m_Color: {r: 0.9892183, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -191,7 +191,7 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 256
-  justZoneItemGauge: 1
+  justZoneItemGauge: 0.3
   justZoneSpeedMultiplier: 1.5
   justZoneSpeedDuration: 1
   isJustZonePending: 0
