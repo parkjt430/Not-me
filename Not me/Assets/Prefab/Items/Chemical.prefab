@@ -178,4 +178,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Chemical
   ShowTopMostFoldoutHeaderGroup: 1
-  duration: 5
+  duration: 9999

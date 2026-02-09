@@ -5,6 +5,14 @@ public class SimpleTestUI : MonoBehaviour
 {
     void OnGUI()
     {
+        // [수정] NetworkManager가 없으면 아무것도 그리지 않고 리턴(종료)
+        if (NetworkManager.Singleton == null)
+        {
+            // (선택사항) 화면에 경고를 띄우고 싶다면 아래 주석 해제
+            // GUILayout.Label("NetworkManager가 씬에 없습니다!"); 
+            return;
+        }
+
         GUILayout.BeginArea(new Rect(10, 10, 300, 300)); // 왼쪽 위에 영역 잡기
 
         // 아직 연결 안 된 상태일 때만 버튼 보여주기
@@ -12,12 +20,12 @@ public class SimpleTestUI : MonoBehaviour
         {
             GUILayout.Label("== Network Test =="); // 제목
 
-            if (GUILayout.Button("Host (방장)")) 
+            if (GUILayout.Button("Host (방장)"))
             {
                 NetworkManager.Singleton.StartHost(); // 방장 시작
             }
 
-            if (GUILayout.Button("Client (참가)")) 
+            if (GUILayout.Button("Client (참가)"))
             {
                 NetworkManager.Singleton.StartClient(); // 손님 참가
             }

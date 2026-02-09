@@ -38,7 +38,12 @@ public class PlayerController : NetworkBehaviour
     public float justZoneItemGauge = 0.2f;
     public float justZoneSpeedMultiplier = 1.5f;
     public float justZoneSpeedDuration = 1f;
-    
+
+    [Header("Audio")]
+    public AudioClip jumpSound; // 인스펙터에서 점프 소리 파일을 넣을 곳
+    public AudioClip dashSound; // 인스펙터에서 대쉬 소리 파일을 넣을 곳
+    private AudioSource audioSource; // 소리를 재생할 스피커 역할
+
     private Rigidbody2D rb;
     private int jumpCount = 0;
     private bool isGrounded = false;
@@ -74,6 +79,8 @@ public class PlayerController : NetworkBehaviour
 
         // 내 콜라이더 가져오기
         myCollider = GetComponent<Collider2D>();
+        //오디오 소스 가져오기
+        audioSource = GetComponent<AudioSource>();
 
         // 씬에 있는 'GlobalSafetyFloor' 찾기 (태그로 찾기)
         GameObject floorObj = GameObject.FindGameObjectWithTag("SafetyFloor");
@@ -180,6 +187,12 @@ public class PlayerController : NetworkBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             jumpCount++;
+
+            if (audioSource != null && jumpSound != null)
+            {
+                // PlayOneShot은 소리가 겹쳐도 끊기지 않고 겹쳐서 재생됨 (효과음에 적합)
+                audioSource.PlayOneShot(jumpSound);
+            }
         }
         if (jumpCount == 1)
         {
@@ -576,6 +589,11 @@ public class PlayerController : NetworkBehaviour
         // 서버에서 목표 속도 변경
         float boostedSpeed = moveSpeed * modifier;
         UpdateTargetSpeedClientRpc(boostedSpeed);
+        // 속도 높아지면서 오디오 재생
+        if (IsOwner && audioSource != null && dashSound != null)
+        {
+            audioSource.PlayOneShot(dashSound);
+        }
 
         yield return new WaitForSeconds(duration);
 
