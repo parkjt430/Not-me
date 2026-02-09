@@ -7,13 +7,18 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance;
 
     public Slider itemSlider;
-    public Slider progressSlider;
     public TextMeshProUGUI itemText;
     public GameObject glitchEffectPanel; // 글리치 효과 패널 (UI에 추가 필요)
-    public float finishLineX = 500f; //최종점 : 500f 거리
 
+    public Slider progressSlider;
+    public RectTransform localIndicator; 
+    public RectTransform remoteIndicator;
+    public float finishLineX = 530f; //최종점 : 500f 거리
+    private float sliderWidth;
+    
     private PlayerController targetPlayer;
-
+    private PlayerController remotePlayer;// 상대방
+    
     void Awake()
     {
         if (Instance == null)
@@ -27,24 +32,57 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        if (progressSlider != null)
+        {
+            sliderWidth = progressSlider.GetComponent<RectTransform>().rect.width;
+        }
+    }
+
     public void RegisterPlayer(PlayerController player)
     {
-        // Only register local player
-        targetPlayer = player;
+        //본인과 상대방 확인
+        if (player.IsOwner) targetPlayer = player;
+        else remotePlayer = player; 
     }
 
     void Update()
     {
-        if (targetPlayer == null) return;
+        float localRatio = 0f;
+        float remoteRatio = 0f;
 
-        // 아이템 게이지 (NetworkVariable 접근)
-        itemSlider.value = targetPlayer.itemGauge.Value;
+        if (targetPlayer != null)
+        {
+            // 아이템 게이지 (NetworkVariable 접근)
+            itemSlider.value = targetPlayer.itemGauge.Value;
+            //보유 아이템 텍스트 표시(임시)
+            UpdateItemText();
+            
+            localRatio = Mathf.Clamp01(targetPlayer.transform.position.x / finishLineX);
+        }
 
-        //보유 아이템 텍스트 표시(임시)
-        UpdateItemText();
+        if (remotePlayer != null)
+        {
+            remoteRatio = Mathf.Clamp01(remotePlayer.transform.position.x / finishLineX);
+        }
+        
+        if (progressSlider != null)
+        {
+            progressSlider.value = Mathf.Max(localRatio, remoteRatio);
+        }
 
-        // 진행도 게이지
-        progressSlider.value = targetPlayer.transform.position.x / finishLineX;
+        // 내 삼각형 아이콘 이동
+        if (localIndicator != null)
+        {
+            localIndicator.anchoredPosition = new Vector2(localRatio * sliderWidth, localIndicator.anchoredPosition.y);
+        }
+
+        // 상대 삼각형 아이콘 이동
+        if (remoteIndicator != null)
+        {
+            remoteIndicator.anchoredPosition = new Vector2(remoteRatio * sliderWidth, remoteIndicator.anchoredPosition.y);
+        }
     }
 
     void UpdateItemText()

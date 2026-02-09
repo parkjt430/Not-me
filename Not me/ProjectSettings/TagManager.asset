@@ -9,6 +9,7 @@ TagManager:
   - AttackItem
   - JustZone
   - SafetyFloor
+  - EndPoint
   layers:
   - Default
   - TransparentFX
