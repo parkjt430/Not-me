@@ -292,7 +292,7 @@ public class PlayerController : NetworkBehaviour
                     if (itemObtained.Value == 0)
                     {
                         itemGauge.Value = 0f;
-                        ObtainItemServerRpc(Random.Range(1, 8));
+                        itemObtained.Value = Random.Range(1, 9);
                     }
                 }
             }

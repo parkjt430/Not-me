@@ -10,13 +10,26 @@ public class Firewall : NetworkBehaviour
 
     public void SetOwner(PlayerController player)
     {
+        // 서버 자신의 변수 설정
         ownerPlayer = player;
+        
+        // 다른 클라이언트들에게도 알림
+        SetOwnerClientRpc(player);
+    }
+    
+    [ClientRpc]
+    private void SetOwnerClientRpc(NetworkBehaviourReference playerRef)
+    {
+        // 전달받은 참조로 실제 PlayerController 객체를 찾아서 할당
+        if (playerRef.TryGet(out PlayerController player))
+        {
+            ownerPlayer = player;
+        }
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
         if (IsServer)
         {
             StartCoroutine(DeactivateAfterDelay(shieldDuration));
@@ -25,7 +38,7 @@ public class Firewall : NetworkBehaviour
 
     void Update()
     {
-        // 플레이어를 따라다님
+        // 방화벽이 플레이어를 따라다님
         if (ownerPlayer != null)
         {
             transform.position = ownerPlayer.transform.position + offset;
