@@ -22,6 +22,7 @@ public class PlayerController : NetworkBehaviour
     public NetworkVariable<bool> hasEMP = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<bool> hasGlitchScreen = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<bool> hasFirewall = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> isGameStarted = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private float currentSpeed;// 실제 현재 적용 중인 속도
     
     [Header("Item")]
@@ -56,6 +57,7 @@ public class PlayerController : NetworkBehaviour
     //무적 상태일 때 떨어지지 않도록 안전 바닥 콜라이더
     private Collider2D safetyFloorCollider;
     private Collider2D myCollider;
+    private SpriteRenderer spriteRenderer;
 
     public override void OnNetworkSpawn()
     {
@@ -64,14 +66,9 @@ public class PlayerController : NetworkBehaviour
         rb = GetComponent<Rigidbody2D>();
         targetSpeed = moveSpeed;
         currentSpeed = moveSpeed;
-        // [애니메이션] 가져오기
         anim = GetComponent<Animator>();
-
-        // Only register local player to UI
-        // if (IsOwner && UIManager.Instance != null)
-        // {
-        //     UIManager.Instance.RegisterPlayer(this);
-        // }
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        
         if ( UIManager.Instance != null)
         {
             UIManager.Instance.RegisterPlayer(this);
@@ -94,6 +91,37 @@ public class PlayerController : NetworkBehaviour
 
         // 초기 상태 적용
         UpdateSafetyFloorCollision(isGod.Value);
+        
+        UpdatePlayerColor();
+        if (IsServer)
+        {
+            // 이미 게임이 시작된 상태가 아니라면 카운트다운 시작
+            if (!isGameStarted.Value)
+            {
+                StartCoroutine(StartGameCountdownRoutine());
+            }
+        }
+    }
+    
+    void UpdatePlayerColor()
+    {
+        if (spriteRenderer == null) return;
+
+        if (IsOwner)
+        {
+            spriteRenderer.color = Color.black; // 내 캐릭터는 검은색
+        }
+        else
+        {
+            spriteRenderer.color = Color.red; // 상대방 캐릭터는 빨간색
+        }
+    }
+    
+    IEnumerator StartGameCountdownRoutine()//게임 3초뒤 시작
+    {
+        yield return new WaitForSeconds(3f);
+        
+        isGameStarted.Value = true;
     }
 
     public override void OnNetworkDespawn()
@@ -123,6 +151,15 @@ public class PlayerController : NetworkBehaviour
     {
         // Only allow input for local player
         if (!IsOwner) return;
+        
+        if (!isGameStarted.Value) //시작 3초전 대기 상황
+        {
+            rb.linearVelocity = Vector2.zero;
+            currentSpeed = 0f;
+            anim.SetFloat("yVelocity", 0);
+            // ****필요하다면 여기서 'Ready' 같은 UI를 띄울 수도 있음*******
+            return;
+        }
 
         // [애니메이션] 1. 피격(Stun) 상태 동기화
         // 네트워크 변수 isStunned 값을 애니메이터에 계속 전달
