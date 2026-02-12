@@ -68,11 +68,9 @@ public class PlayerController : NetworkBehaviour
         currentSpeed = moveSpeed;
         anim = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        
-        if ( UIManager.Instance != null)
-        {
-            UIManager.Instance.RegisterPlayer(this);
-        }
+
+        // 안전하게 연결하기 위해 코루틴 실행
+        StartCoroutine(TryConnectToUIManager());
 
         // 내 콜라이더 가져오기
         myCollider = GetComponent<Collider2D>();
@@ -102,7 +100,20 @@ public class PlayerController : NetworkBehaviour
             }
         }
     }
-    
+
+    private IEnumerator TryConnectToUIManager()
+    {
+        // UIManager 인스턴스가 유효할 때까지 대기
+        // (null이거나 파괴된 객체라면 계속 기다림)
+        while (UIManager.Instance == null || UIManager.Instance.gameObject == null)
+        {
+            yield return null; // 다음 프레임까지 대기
+        }
+
+        // UIManager가 준비되면 등록 함수 호출
+        UIManager.Instance.RegisterPlayer(this);
+    }
+
     void UpdatePlayerColor()
     {
         if (spriteRenderer == null) return;

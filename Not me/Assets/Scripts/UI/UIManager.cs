@@ -11,25 +11,22 @@ public class UIManager : MonoBehaviour
     public GameObject glitchEffectPanel; // 글리치 효과 패널 (UI에 추가 필요)
 
     public Slider progressSlider;
-    public RectTransform localIndicator; 
+    public RectTransform localIndicator;
     public RectTransform remoteIndicator;
     public float finishLineX = 530f; //최종점 : 500f 거리
     private float sliderWidth;
-    
+
     private PlayerController targetPlayer;
     private PlayerController remotePlayer;// 상대방
-    
+
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
     }
 
     void Start()
@@ -44,7 +41,7 @@ public class UIManager : MonoBehaviour
     {
         //본인과 상대방 확인
         if (player.IsOwner) targetPlayer = player;
-        else remotePlayer = player; 
+        else remotePlayer = player;
     }
 
     void Update()
@@ -58,7 +55,7 @@ public class UIManager : MonoBehaviour
             itemSlider.value = targetPlayer.itemGauge.Value;
             //보유 아이템 텍스트 표시(임시)
             UpdateItemText();
-            
+
             localRatio = Mathf.Clamp01(targetPlayer.transform.position.x / finishLineX);
         }
 
@@ -66,7 +63,7 @@ public class UIManager : MonoBehaviour
         {
             remoteRatio = Mathf.Clamp01(remotePlayer.transform.position.x / finishLineX);
         }
-        
+
         if (progressSlider != null)
         {
             progressSlider.value = Mathf.Max(localRatio, remoteRatio);
@@ -106,6 +103,15 @@ public class UIManager : MonoBehaviour
         if (glitchEffectPanel != null)
         {
             glitchEffectPanel.SetActive(enable);
+        }
+    }
+    
+    void OnDestroy()
+    {
+        // 내가 파괴될 때 Instance가 나를 가리키고 있다면 비워줌
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 }
