@@ -45,6 +45,8 @@ public class GameManager : NetworkBehaviour
             resultText.color = Color.red;
         }
 
+        NetworkManager.Singleton.Shutdown();
+
         // 3초 뒤 메인 화면으로 이동
         StartCoroutine(ReturnToMainMenuRoutine());
     }
