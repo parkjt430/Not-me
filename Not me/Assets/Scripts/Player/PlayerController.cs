@@ -436,7 +436,7 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void GetStunnedServerRpc(float duration)
     {
-        if (isGod.Value || hasFirewall.Value) return;
+        if (hasFirewall.Value) return;
 
         StartCoroutine(StunRoutine(duration));
     }
@@ -444,7 +444,7 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ApplyGravityDebuffServerRpc(float duration)
     {
-        if (isGod.Value || hasFirewall.Value) return;
+        if (hasFirewall.Value) return;
 
         StartCoroutine(GravityRoutine(duration));
     }
@@ -452,7 +452,7 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ApplyNeuroVirusServerRpc(float duration)
     {
-        if (isGod.Value || hasFirewall.Value) return;
+        if (hasFirewall.Value) return;
 
         StartCoroutine(NeuroVirusRoutine(duration));
     }
@@ -460,7 +460,7 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ApplyEMPServerRpc(float duration)
     {
-        if (isGod.Value || hasFirewall.Value) return;
+        if (hasFirewall.Value) return;
 
         StartCoroutine(EMPRoutine(duration));
     }
@@ -468,7 +468,7 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ApplyGlitchScreenServerRpc(float duration)
     {
-        if (isGod.Value || hasFirewall.Value) return;
+        if (hasFirewall.Value) return;
 
         StartCoroutine(GlitchScreenRoutine(duration));
     }
@@ -652,7 +652,7 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)] //속도 디버프 루틴
     public void ApplySpeedDebuffServerRpc(float multiplier, float duration)
     {
-        if (isGod.Value || isStunned.Value) return; // 무적이나 기절 상태면 무시
+        if (isStunned.Value) return; // 무적이나 기절 상태면 무시
         
         StartCoroutine(SpeedModifyRoutine(multiplier, duration));
     }
